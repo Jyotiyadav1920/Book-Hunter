@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<form class="mb-4" method="get" action="{{ url_for('index') }}">
+  <div class="row g-2">
+    
+    <div class="col-md-8">
+      <input type="text" name="search" class="form-control"
+             placeholder="Search by Title, Author, or Type"
+             value="{{ search if search else '' }}">
+    </div>
+
+    <div class="col-md-3">
+      <select name="type" class="form-select">
+        {% for t in book_types %}
+          <option value="{{ t }}" {% if filter_type == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-primary" type="submit">Go</button>
+    </div>
+  </div>
+</form>
+{% if search or (filter_type and filter_type != 'All') %}
+  <a class="btn btn-outline-secondary btn-sm mb-3" href="{{ url_for('index') }}">Reset</a>
+{% endif %}
+
+
+<h2 class="mb-3">Available Books</h2>
+<div class="row g-3">
+  {% for b in books %}
+  <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+    <div class="card h-100 shadow-sm position-relative">
+      <img src="{{ b.image_url }}" class="card-img-top" alt="{{ b.title }}">
+      {% if current_user.is_authenticated %}
+      <form method="post" action="{{ url_for('wishlist_toggle', book_id=b.id) }}">
+        <button class="heart-btn" type="submit">
+          {% if b.wishlisted %}❤️{% else %}🖤{% endif %}
+        </button>
+      </form>
+      {% endif %}
+      <div class="card-body">
+        <h5 class="card-title mb-1">{{ b.title }}</h5>
+        <p class="text-muted mb-2">{{ b.author }} • {{ b.type }}</p>
+        <span class="badge rounded-pill text-bg-{{ 'success' if b.available else 'danger' }}">
+          {{ 'Available' if b.available else 'Taken' }}
+        </span>
+        <div class="mt-2 small">
+          <div><strong>Owner:</strong> {{ b.owner.name }}</div>
+          {% if b.owner.email %}<div><strong>Email:</strong> <a href="mailto:{{ b.owner.email }}">{{ b.owner.email }}</a></div>{% endif %}
+          {% if b.owner.phone %}<div><strong>Phone:</strong> <a href="tel:{{ b.owner.phone }}">{{ b.owner.phone }}</a></div>{% endif %}
+        </div>
+      </div>
+      {% if current_user.is_authenticated and b.owner.id != current_user.id %}
+      <div class="card-footer bg-transparent border-0 pt-0 pb-3">
+        <a class="btn btn-primary w-100" href="{{ url_for('chat', user_id=b.owner.id) }}">Chat with Owner</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
